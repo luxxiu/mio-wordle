@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Mono:wght@700&display=swap');
+:root{
+  --card-gap:clamp(4px,1vw,10px);
+  --cell-gap:var(--card-gap);
+}
+body{
+  margin:0;padding:20px;background:#000;color:#eee;
+  font-family:'Inter',sans-serif;
+}
+h1{font-size:24px;font-weight:600;margin-bottom:20px;color:#eee}
+input[type=file]{
+  margin-bottom:30px;padding:10px;font-size:14px;cursor:pointer;
+  background:#111;color:#eee;border:1px solid #555;border-radius:4px;
+}
+#cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+  gap:0;
+}
+
+@media(max-width:600px){
+  #cards{grid-template-columns:1fr;}
+}
+
+.card{
+  background:#000;color:#eee;padding:var(--card-gap);
+  box-sizing:border-box;user-select:none;
+
+  position:relative;cursor:pointer;
+  opacity:0;transform:translateY(20px);
+  animation:fadeInUp .5s ease forwards;
+}
+@keyframes fadeInUp{
+  to{opacity:1;transform:translateY(0)}
+}
+.dimmed{filter:brightness(.35);}
+.index{
+  font-family:'Space Mono',monospace;
+  font-size:16px;font-weight:700;margin-bottom:14px;color:#ccc;
+}
+.grid{
+  display:grid;gap:var(--cell-gap);margin-bottom:var(--card-gap);
+  grid-template-columns:repeat(5,calc((100% - 4*var(--cell-gap))/5));
+}
+.cell{
+  width:100%;aspect-ratio:1/1;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:600;text-transform:uppercase;color:#fff;
+}
+.green{background:#6aaa64;}
+.yellow{background:#c9b458;}
+.gray{background:#787c7e;}
+.empty{background:#222;color:transparent;}
+.red{background:#d9534f;}
+.timestamp{font-size:13px;color:#999;}
+
+.copied-letter{
+  background:#6aaa64 !important;
+  color:#000 !important;
+}
+
+@keyframes flipVertical {
+  0% {
+    transform: rotateX(90deg);
+    opacity: 0;
+    transform-origin: center top;
+  }
+  40% {
+    transform: rotateX(-20deg);
+    opacity: 1;
+    transform-origin: center top;
+  }
+  70% {
+    transform: rotateX(10deg);
+    transform-origin: center top;
+  }
+  100% {
+    transform: rotateX(0deg);
+    opacity: 1;
+    transform-origin: center center;
+  }
+}
+
+.flip {
+  backface-visibility: visible;
+  transform-style: preserve-3d;
+  animation: flipVertical 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.scroll-menu{
+  display:flex;
+  gap:10px;
+  padding:10px 0 20px;
+  overflow-x:auto;
+  scrollbar-width:none;         /* Firefox */
+}
+.scroll-menu::-webkit-scrollbar{display:none;}   /* Chrome/Edge */
+
+.scroll-menu button {
+  flex: 0 0 auto;
+  background: #222;
+  border: 2px solid #555;
+  color: #eee;
+  font-family: 'Space Mono', monospace;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  height: 50px;       /* altezza fissa uguale per tutti */
+  padding: 0 10px;    /* padding orizzontale contenuto */
+  min-width: auto;    /* larghezza automatica di base */
+}
+
+/* Bottone "Tutti" (sia mesi che tentativi) */
+#monthMenu button[data-value="all"],
+#attemptMenu button[data-value="all"] {
+  min-width: 70px;    /* più largo per "tutti" */
+  padding: 0 16px;    /* padding leggermente maggiore per il testo più lungo */
+}
+
+/* Bottoni numerici (1–6): quadrati */
+#attemptMenu button:not([data-value="all"]) {
+  width: 50px;        /* larghezza fissa uguale all'altezza */
+  padding: 0;         /* niente padding per bottone quadrato */
+  font-size: 16px;
+}
+
+/* Bottoni mesi: larghezza variabile */
+#monthMenu button:not([data-value="all"]) {
+  width: auto;        /* larghezza dinamica */
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+
+/* ➤ Stato attivo per entrambi */
+.scroll-menu button.active {
+  background: #6aaa64;
+  border-color: #6aaa64;
+  color: #fff;
+}
+
+h4 a {
+  color: white;          /* colore bianco di default */
+  text-decoration: none; /* niente sottolineatura */
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+h4 a:hover {
+  color: gray;           /* diventa grigio al passaggio */
+  text-decoration: none; /* ancora niente sottolineatura */
+}

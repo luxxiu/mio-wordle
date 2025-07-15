@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mega‑Wordle Torre</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root{
+      --cell:42px;
+      --gap:3px;
+    }
+    
+    /* ===== lavagna unica ===== */
+    #board{
+      display:flex;
+      flex-direction:column;
+      gap:var(--gap);
+      padding:var(--gap);
+      background:#121213;
+      border-radius:4px;
+      /* se diventa lunghissima, la rendo scrollabile in verticale */
+      max-height:80vh;
+      overflow-y:auto;
+      
+      width: calc(5 * var(--cell) + 4 * var(--gap));
+      margin: 0 auto; /* centrato orizzontalmente */
+    }
+    /* una riga Wordle */
+    .row{
+      display:flex;
+      gap:var(--gap);
+      cursor:pointer;
+    }
+    .cell{
+      width:var(--cell);
+      height:var(--cell);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:22px;
+      font-weight:bold;
+      border-radius:4px;
+      text-transform:uppercase;
+      color:#fff;
+    }
+    #count{
+      margin-top:15px;
+      font-weight:bold;
+    }
+    
+    /* ===== se lo schermo è stretto (telefono) ===== */
+    @media (max-width: 500px) {
+      #board {
+        width: 100vw;
+        padding-left: var(--gap);
+        padding-right: var(--gap);
+        /* ridefinisco la variabile qui dentro */
+        --cell: calc((100vw - 2 * var(--gap) - 4 * var(--gap)) / 5);
+      }
+      .cell {
+        width: var(--cell);
+        height: var(--cell);
+        font-size: clamp(16px, 5vw, 22px);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>[MEGA WORDLE]</h1>
+<h4><a href="index.html">[MIO WORDLE]</a></h4>
+
+
+<div id="board"></div>
+
+  <script>
+    /* colore casuale stile Wordle */
+    function randomColor(){
+      const colors=['green','yellow','gray'];
+      return colors[Math.floor(Math.random()*colors.length)];
+    }
+    
+    /* ==== CARICAMENTO AUTOMATICO DI word-list.txt ==== */
+    (function loadWordList(){
+      fetch('word-list.txt')
+      .then(resp => {
+        if (!resp.ok) throw new Error(`Errore HTTP: ${resp.status}`);
+        return resp.text();
+      })
+      .then(txt => {
+        const words = txt
+        .split(/\r?\n/)
+        .map(w => w.trim().toUpperCase())
+        .filter(w => /^[A-Z]{5}$/.test(w)); // solo parole di 5 lettere
+        
+        const board = document.getElementById('board');
+        board.innerHTML = ''; // pulisce
+        
+        words.forEach(word => {
+          const row = document.createElement('div');
+          row.className = 'row';
+          row.dataset.word = word;
+          
+          word.split('').forEach(letter => {
+            const cell = document.createElement('div');
+            cell.className = 'cell ' + randomColor();
+            cell.textContent = letter;
+            row.appendChild(cell);
+          });
+          
+          row.addEventListener('click', () => {
+            window.open(`https://dictionary.cambridge.org/dictionary/english/${word.toLowerCase()}`, '_blank');
+          });
+          
+          board.appendChild(row);
+        });
+        
+        document.getElementById('count').textContent = `Totale parole: ${words.length}`;
+      })
+      .catch(err => {
+        console.error('Errore nel caricamento di word-list.txt:', err);
+      });
+    })();
+  </script>
+
+</body>
+</html>

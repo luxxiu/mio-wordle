@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+  <title>Mio Wordle</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<h1>[MIO WORDLE]</h1>
+<h4><a href="mega-wordle.html">[MEGA WORDLE]</a></h4>
+
+  <div id="monthMenu" class="scroll-menu"></div>
+  
+  <!-- menù tentativi -->
+  <div id="attemptMenu" class="scroll-menu">
+    <!-- bottoni 1‑6 creati da JS -->
+  </div>
+
+<div id="cards"></div>
+
+<script>
+  /* ===== variabili globali ===== */
+  const emojiMap = {green:'🟩', yellow:'🟨', gray:'⬛', empty:'⬛'};
+  let allEntries=[], monthFilter='all', triesFilter='all';
+  const itMonths=['gennaio','febbraio','marzo','aprile','maggio','giugno',
+    'luglio','agosto','settembre','ottobre','novembre','dicembre'];
+  
+  /* ===== utilità colori ===== */
+  function colorRow(g,sol){
+    const res=Array(5).fill('gray'),s=[...sol];
+    for(let i=0;i<5;i++) if(g[i]===s[i]){res[i]='green';s[i]=null;}
+    for(let i=0;i<5;i++){
+      if(res[i]!=='gray')continue;
+      const j=s.indexOf(g[i]); if(j>-1){res[i]='yellow';s[j]=null;}
+    }
+    return res;
+  }
+  
+  /* ===== testo da copiare ===== */
+  function cardText(entry){
+    if(entry.lost){
+      return `Wordle ${entry.index} – perso`;
+    }
+    const idx=entry.index||'—', sol=(entry.word||'').toUpperCase();
+    const wordLink=`https://dictionary.cambridge.org/dictionary/english/${sol.toLowerCase()}`;
+    const rows=[], colorsMap={green:'🟩',yellow:'🟨',gray:'⬛'};
+    let solved='X';    
+    for(let r=1;r<=6;r++){
+      const g=(entry[r]||'').toUpperCase();
+      if(g.length!==5)continue;
+      rows.push(colorRow(g,sol).map(c=>colorsMap[c]).join(''));
+      if(g===sol){solved=r;break;}
+    }
+    if(solved==='X') while(rows.length<6) rows.push('⬛⬛⬛⬛⬛');
+    
+    let d=entry.data||entry.date||'?';
+    if(/^\d{2}\/\d{2}\/\d{4}$/.test(d)) d=d;
+    const t=entry.time||'?';
+    return `Wordle ${idx} ${solved}/6\n\n${rows.join('\n')}\n\nrisolto il ${d} alle ${t} la parola era [${sol.toLowerCase()}](${wordLink})`;
+  }
+  
+  /* ===== parser CSV ===== */
+  function parseCSV(txt){
+    if(txt.charCodeAt(0)===0xFEFF) txt=txt.slice(1);
+    const sep=txt.split('\n')[0].includes(';')?';':',';
+    const [header,...rows]=txt.trim().split(/\r?\n/);
+    const heads=header.split(sep).map(h=>h.trim().toLowerCase());
+    return rows.filter(Boolean).map(r=>{
+      const o={},cols=r.split(sep);
+      heads.forEach((h,i)=>o[h]=cols[i]?.trim()||'');
+      return o;
+    });
+  }
+  
+  /* ===== tentativi per vincere ===== */
+  function attemptsToSolve(e){
+    if(e.lost) return 'X';
+    const sol=(e.word||'').toUpperCase();
+    for(let r=1;r<=6;r++) if(((e[r]||'').toUpperCase())===sol) return r;
+    return 'X';
+  }
+  
+  /* ===== riempi i buchi di indice ===== */
+  function fillMissingEntries(list){
+    const sorted=[...list].sort((a,b)=>parseInt(a.index||0)-parseInt(b.index||0));
+    const result=[];
+    for(let i=0;i<sorted.length;i++){
+      const curr=sorted[i];
+      result.push(curr);
+      const currIdx=parseInt(curr.index);
+      const nextIdx=i<sorted.length-1?parseInt(sorted[i+1].index):null;
+      if(nextIdx && nextIdx>currIdx+1){
+        for(let m=currIdx+1;m<nextIdx;m++){
+          result.push({index:m,lost:true});
+        }
+      }
+    }
+    return result;
+  }
+  
+  /* ===== render card list ===== */
+  function renderCards(){
+    const wrap=document.getElementById('cards'); wrap.innerHTML='';
+    let list=[...allEntries];
+    if(monthFilter!=='all'){
+      list=list.filter(e=>(e.data||e.date||'').split('/')[1]===monthFilter);
+    }
+    if(triesFilter!=='all'){
+      list=list.filter(e=>attemptsToSolve(e)==triesFilter);
+    }
+    list=fillMissingEntries(list);
+    list.forEach((e,i)=>wrap.appendChild(buildCard(e,i*0.05)));
+  }
+  
+  /* ===== build single card ===== */
+  function buildCard(entry,delay){
+    const card=document.createElement('div'); card.className='card';
+    card.style.animationDelay=`${delay}s`;
+    
+    /* indice (click = copia) */
+    const head=document.createElement('div');
+    head.className='index'; head.textContent=`#${entry.index||'—'}`;
+    card.appendChild(head);
+    
+    /* === CARD "PERSO" === */
+    if(entry.lost){
+      for(let r=0; r<6; r++){
+        const row = document.createElement('div');
+        row.className = 'grid';
+        const letters = ['P','E','R','S','O'];
+        letters.forEach(l => {
+          const cell = document.createElement('div');
+          cell.className = 'cell red';
+          cell.textContent = l;
+          row.appendChild(cell);
+        });
+        card.appendChild(row);
+      }
+      const ts = document.createElement('div');
+      ts.className = 'timestamp';
+      ts.textContent = 'mancante';
+      card.appendChild(ts);
+      card.classList.add('dimmed', 'lost'); // assicura che la card sia oscurata
+      return card;
+    }
+
+    
+    /* griglie tentativi normali */
+    const sol=(entry.word||'').toUpperCase();
+    for(let r=1;r<=6;r++){
+      const guess=(entry[r]||'').toUpperCase();
+      const colors=guess.length===5?colorRow(guess,sol):Array(5).fill('empty');
+      const row=document.createElement('div'); row.className='grid';
+      row.dataset.word=guess;
+      
+      row.addEventListener('click',e=>{
+        e.stopPropagation();
+        const w=e.currentTarget.dataset.word;
+        if(w.length===5) window.open(`https://dictionary.cambridge.org/dictionary/english/${w.toLowerCase()}`,'_blank');
+      });
+      
+      for(let c=0;c<5;c++){
+        const cell=document.createElement('div');
+        cell.className=`cell ${colors[c]}`;
+        cell.textContent=guess[c]||'';
+        cell.dataset.origText=cell.textContent;
+        cell.dataset.origClass=colors[c];
+        cell.dataset.row=r-1; cell.dataset.col=c;
+        row.appendChild(cell);
+      }
+      card.appendChild(row);
+    }
+    
+    const ts=document.createElement('div'); ts.className='timestamp';
+    ts.textContent=`risolto il ${entry.data||entry.date||'?'} alle ${entry.time||'?'}`;
+    card.appendChild(ts);
+    
+    /* ---- CLICK sull'indice -> copia + animazione ---- */
+    head.addEventListener('click', e => {
+      e.stopPropagation();
+      navigator.clipboard.writeText(cardText(entry));
+      
+      // oscura tutte le card, tranne questa e tranne quelle "perso"
+      document.querySelectorAll('.card').forEach(c => {
+        if(c.classList.contains('lost')) {
+          c.classList.add('dimmed'); // persi sempre dimmed
+        } else {
+          c.classList.add('dimmed');
+        }
+      });
+      card.classList.remove('dimmed');
+      
+      const cells = card.querySelectorAll('.cell');
+      cells.forEach(c => {
+        c.textContent = '';
+        c.classList.remove('empty', 'gray', 'yellow');
+        c.classList.add('green', 'flip');
+      });
+      const L = ['C', 'O', 'P', 'I', 'E', 'D'];
+      for(let r = 0; r < 6; r++){
+        for(let c = 0; c < 5; c++){
+          const cell = card.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+          if(cell) cell.textContent = L[r];
+        }
+      }
+      setTimeout(() => {
+        cells.forEach(cell => {
+          cell.textContent = cell.dataset.origText;
+          cell.className = `cell ${cell.dataset.origClass}`;
+        });
+        // Rimuove dimmed solo da card NON "perso"
+        document.querySelectorAll('.card').forEach(c => {
+          if(!c.classList.contains('lost')) {
+            c.classList.remove('dimmed');
+          }
+        });
+      }, 1500);
+    });
+    
+    return card;
+  }
+  
+  /* ========= FILE INPUT & MENÙ ========= */
+  document.getElementById('fileInput').addEventListener('change',e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      allEntries=parseCSV(ev.target.result);
+      
+      /* --- MENÙ MESI --- */
+      const monthSet=new Set(
+        allEntries.map(e=>(e.data||e.date||'').split('/')[1]).filter(m=>/^[0-9]{2}$/.test(m))
+      );
+      const months=[...monthSet].sort();
+      const mm=document.getElementById('monthMenu');
+      mm.innerHTML=''; mm.appendChild(makePill('tutti','all','month'));
+      months.forEach(num=>{
+        mm.appendChild(makePill(itMonths[num-1],num,'month'));
+      });
+      
+      /* --- MENÙ TENTATIVI --- */
+      const trySet=new Set(allEntries.map(e=>attemptsToSolve(e)).filter(n=>n>=1&&n<=6));
+      const tm=document.getElementById('attemptMenu');
+      tm.innerHTML=''; tm.appendChild(makePill('tutti','all','try'));
+      [...trySet].sort((a,b)=>a-b).forEach(n=>tm.appendChild(makePill(n,n,'try')));
+      
+      monthFilter=triesFilter='all';
+      renderCards();
+    };
+    reader.readAsText(file,'utf-8');
+  });
+  
+  /* ===== make pill ===== */
+  function makePill(label,value,type){
+    const b=document.createElement('button');
+    b.textContent=label; b.dataset.value=value; b.dataset.type=type;
+    if(value==='all') b.classList.add('active');
+    b.addEventListener('click',()=>{
+      b.parentElement.querySelectorAll('button').forEach(el=>el.classList.toggle('active',el===b));
+      if(type==='month') monthFilter=value; else triesFilter=value;
+      renderCards();
+    });
+    return b;
+  }
+  // Carica automaticamente wordle-data.csv da server
+  (function loadFromCSV(){
+    fetch('wordle-data.csv')
+    .then(resp => {
+      if (!resp.ok) throw new Error(`HTTP error! Status: ${resp.status}`);
+      return resp.text();
+    })
+    .then(txt => {
+      allEntries = parseCSV(txt);
+      
+      // --- Popola menu Mesi ---
+      const monthSet = new Set(
+        allEntries.map(e => (e.data||e.date||'').split('/')[1])
+        .filter(m => /^[0-9]{2}$/.test(m))
+      );
+      const months = [...monthSet].sort();
+      const mm = document.getElementById('monthMenu');
+      mm.innerHTML = '';
+      mm.appendChild(makePill('tutti','all','month'));
+      months.forEach(num => {
+        mm.appendChild(makePill(itMonths[num-1], num, 'month'));
+      });
+      
+      // --- Popola menu Tentativi ---
+      const trySet = new Set(allEntries.map(e => attemptsToSolve(e)).filter(n => n>=1 && n<=6));
+      const tm = document.getElementById('attemptMenu');
+      tm.innerHTML = '';
+      tm.appendChild(makePill('tutti','all','try'));
+      [...trySet].sort((a,b) => a-b)
+      .forEach(n => tm.appendChild(makePill(n, n, 'try')));
+      
+      monthFilter = triesFilter = 'all';
+      renderCards();
+    })
+    .catch(err => console.error('Impossibile caricare wordle-data.csv:', err));
+  })();
+  </script>
+
+</body>
+</html>
