@@ -5,25 +5,25 @@
   <title>Mega‑Wordle Torre</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    :root{
-      --cell:42px;
-      --gap:3px;
+    :root {
+      --cell: 64px; /* aumentata da 42px a 64px */
+      --gap: 4px;   /* leggermente più largo */
     }
     
     /* ===== lavagna unica ===== */
-    #board{
-      display:flex;
-      flex-direction:column;
-      gap:var(--gap);
-      padding:var(--gap);
-      background:#121213;
-      border-radius:4px;
-      /* se diventa lunghissima, la rendo scrollabile in verticale */
-      max-height:80vh;
-      overflow-y:auto;
+    #board {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+      padding: var(--gap);
+      background: #121213;
+      border-radius: 4px;
+      max-height: 80vh;
+      overflow-y: auto;
       
+      /* 5 celle + 4 gap → più larga grazie a cella più grande */
       width: calc(5 * var(--cell) + 4 * var(--gap));
-      margin: 0 auto; /* centrato orizzontalmente */
+      margin: 0 auto;
     }
     /* una riga Wordle */
     .row{
@@ -31,29 +31,24 @@
       gap:var(--gap);
       cursor:pointer;
     }
-    .cell{
-      width:var(--cell);
-      height:var(--cell);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:22px;
-      font-weight:bold;
-      border-radius:4px;
-      text-transform:uppercase;
-      color:#fff;
-    }
-    #count{
-      margin-top:15px;
-      font-weight:bold;
+    .cell {
+      width: var(--cell);
+      height: var(--cell);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      /* font proporzionale anche su desktop */
+      font-size: calc(var(--cell) * 0.5); /* 50% della cella */
+      
+      font-weight: bold;
+      border-radius: 4px;
+      text-transform: uppercase;
+      color: #fff;
     }
     
     /* ===== se lo schermo è stretto (telefono) ===== */
     @media (max-width: 600px) {
-      /*
-      Con clamp() la cella cresce finché c'è spazio a disposizione (100vw),
-      ma non supera 80px; così resta leggibile senza diventare enorme.
-      */
       #board {
         --cell: clamp(48px, calc((100vw - 4 * var(--gap)) / 5), 80px);
         width: calc(5 * var(--cell) + 4 * var(--gap));
@@ -62,8 +57,7 @@
       .cell {
         width: var(--cell);
         height: var(--cell);
-        /* font proporzionale al lato della cella (≈45%) */
-        font-size: calc(var(--cell) * 0.45);
+        font-size: calc(var(--cell) * 0.45); /* proporzionale anche qui */
       }
     }
   </style>
