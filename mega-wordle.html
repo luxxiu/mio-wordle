@@ -49,18 +49,21 @@
     }
     
     /* ===== se lo schermo è stretto (telefono) ===== */
-    @media (max-width: 500px) {
+    @media (max-width: 600px) {
+      /*
+      Con clamp() la cella cresce finché c'è spazio a disposizione (100vw),
+      ma non supera 80px; così resta leggibile senza diventare enorme.
+      */
       #board {
-        width: 100vw;
-        padding-left: var(--gap);
-        padding-right: var(--gap);
-        /* ridefinisco la variabile qui dentro */
-        --cell: calc((100vw - 2 * var(--gap) - 4 * var(--gap)) / 5);
+        --cell: clamp(48px, calc((100vw - 4 * var(--gap)) / 5), 80px);
+        width: calc(5 * var(--cell) + 4 * var(--gap));
       }
+      
       .cell {
         width: var(--cell);
         height: var(--cell);
-        font-size: clamp(16px, 5vw, 22px);
+        /* font proporzionale al lato della cella (≈45%) */
+        font-size: calc(var(--cell) * 0.45);
       }
     }
   </style>
