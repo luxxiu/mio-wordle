@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8" />
-  <title>Mio Wordle</title>
+  <title>MIO WORDLE</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -40,19 +40,30 @@
     /* ===== testo da copiare ===== */
     function cardText(entry){
       if(entry.lost) return `Wordle ${entry.index} – perso`;
-      const idx=entry.index||'—', sol=(entry.word||'').toUpperCase();
-      const rows=[], map={green:'🟩',yellow:'🟨',gray:'⬛'};
-      let solved='X';      
-  for(let r=1;r<=6;r++){
-        const g=(entry[r]||'').toUpperCase();
-        if(g.length!==5) continue;
-        rows.push(colorRow(g,sol).map(c=>map[c]).join(''));
-        if(g===sol){solved=r;break;}
+      
+      const idx  = entry.index || '—';
+      const sol  = (entry.word || '').toUpperCase();
+      const rows = [];
+      const map  = {green:'🟩', yellow:'🟨', gray:'⬛'};
+      
+      let solved = 'X';
+      for(let r=1; r<=6; r++){
+        const g = (entry[r] || '').toUpperCase();
+        if(g.length !== 5) continue;
+        rows.push( colorRow(g, sol).map(c => map[c]).join('') );
+        if(g === sol){ solved = r; break; }
       }
-      if(solved==='X') while(rows.length<6) rows.push('⬛⬛⬛⬛⬛');
-      const d=entry.data||entry.date||'?', t=entry.time||'?';
-      return `Wordle ${idx} ${solved}/6\n\n${rows.join('\n')}\n\nrisolto il ${d} alle ${t} la parola era ${sol}`;
+      if(solved === 'X') while(rows.length < 6) rows.push('⬛⬛⬛⬛⬛');
+      
+      const d = entry.data || entry.date || '?';
+      const t = entry.time || '?';
+      
+      /* ---------- qui torna il link in formato [parola](url) ---------- */
+      const link = `[${sol.toLowerCase()}](https://dictionary.cambridge.org/dictionary/english/${sol.toLowerCase()})`;
+      
+      return `Wordle ${idx} ${solved}/6\n\n${rows.join('\n')}\n\nrisolto il ${d} alle ${t} la parola era ${link}`;
     }
+
     
     /* ===== parser CSV ===== */
     function parseCSV(txt){
